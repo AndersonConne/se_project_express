@@ -5,4 +5,14 @@ Back-end for the WTWR Project.
 Built for TripleTen's software engineering bootcamp. It was my first dive into back-end technologies.
 
 Project features include
-- 
+- GET, POST, PUT, and DELETE requests.
+- Error Handling
+- Middleware functions
+
+## Technologies used
+- Node.js
+- Postman
+- MongoDB and Compass
+- Eslint
+- Express
+- Mongoose
