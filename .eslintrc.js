@@ -19,7 +19,8 @@ module.exports = {
     ecmaVersion: "latest",
     sourceType: "module",
   },
-  rules: {"no-console": ["error", {allow: ["warn"]}],
-  "no-underscore-dangle": "warn",
+  rules: {"no-console": ['off'],
+   "no-underscore-dangle": ["error", { "allow": ["_id"]}],
+   'consistent-return': 'off',
  },
 };

@@ -5,7 +5,7 @@ module.exports.getUsers = (req, res) => {
   console.log('IN CONTROLLER');
   User.find({})
     .then((users) => res.status(200).send(users))
-    .catch((err) => res.status(SERVER_ERROR).send({ message: err.message }))
+    .catch(() => res.status(SERVER_ERROR).send({ message: 'An error has occurred on the server.' }));
 }
 
 module.exports.createUser = (req, res) => {
@@ -18,26 +18,25 @@ module.exports.createUser = (req, res) => {
       if (err.name === "ValidationError")  {
         return res.status(INVALID_DATA).send({message: err.message});
       }
-      // Server Error
       return res.status(SERVER_ERROR).send({ message: "An error has occurred on the server." });
     });
 }
 
-module.exports.getUserById = (req, res, next) => {
+module.exports.getUserById = (req, res) => {
   console.log("User ID");
   const { userId } = req.params;
-
+  console.log(userId);
   User.findById(userId)
     .orFail()
     .then((user) => res.status(200).send(user))
     .catch((err) => {
       console.error(err);
       console.log(err.name);
-        // Not Found Error
       if(err.name === "DocumentNotFoundError") {
-        return res.status(NOT_FOUND_ERROR).send({message: err.message})
+         return res.status(NOT_FOUND_ERROR).send({message: err.message})
+      } if (err.name === "CastError") {
+         return res.status(INVALID_DATA).send({ message: err.message });
       }
-      // Not Valid Error
-      return res.status(INVALID_DATA).send({ message: err.message });
+      res.status(SERVER_ERROR).send({message: 'An error has occured on the server.'});
     })
 }
