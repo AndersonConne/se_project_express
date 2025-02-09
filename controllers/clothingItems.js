@@ -60,7 +60,7 @@ module.exports.likeClothingItem = (req, res) => {
 
 module.exports.unlikeClothingItem = (req, res) => {
   ClothingItems.findByIdAndUpdate(
-    req.params,
+    req.params.itemId,
     { $pull: { likes: req.user._id } },
     { new: true },
   )
