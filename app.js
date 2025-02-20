@@ -1,18 +1,17 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require("cors");
 const mainRouter = require('./routes/index');
+const { createUser, loginUser } = require("./controllers/users");
 
 const { PORT = 3001 } = process.env;
 const app = express();
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '67a5768054488721771ee72e'
-  };
-  next();
-});
 
 app.use(express.json());
+app.use(cors());
+app.post('/signin', loginUser);
+app.post('/signup', createUser);
 app.use(mainRouter);
 
 

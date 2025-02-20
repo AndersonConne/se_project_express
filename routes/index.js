@@ -2,8 +2,10 @@ const router = require('express').Router();
 const userRouter  = require('./users');
 const ClothingItemRouter = require('./clothingItems');
 const { NOT_FOUND_ERROR } = require('../utils/errors');
+const auth = require("../middleware/auth")
 
-router.use('/users', userRouter);
+
+router.use('/users', auth, userRouter);
 router.use('/items', ClothingItemRouter);
 
 router.use((req, res) => {

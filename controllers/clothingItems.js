@@ -1,5 +1,5 @@
 const ClothingItems = require('../models/clothingItem');
-const {NOT_FOUND_ERROR, INVALID_DATA, SERVER_ERROR} = require('../utils/errors')
+const {NOT_FOUND_ERROR, INVALID_DATA, SERVER_ERROR, FORBIDDEN_ERROR} = require('../utils/errors')
 
 module.exports.getClothingItems = (req, res) => {
   ClothingItems.find({})
@@ -23,10 +23,17 @@ module.exports.createClothingItem = (req, res) => {
 }
 
 module.exports.deleteClothingItem = (req, res) => {
-  const  {itemId} =  req.params
+  const {itemId} =  req.params
+  const { currentUser } = req.user;
   ClothingItems.findByIdAndDelete(itemId)
     .orFail()
-    .then((item) => res.status(200).send(item))
+    .then((item) => {
+      if(item.owner !== currentUser) {
+      res.status(FORBIDDEN_ERROR).send({ message: "Not Authorized"});
+    } else {
+      res.status(200).send(item)
+    }
+  })
     .catch((err) => {
       console.error(err);
       if(err.name === "DocumentNotFoundError") {
@@ -34,8 +41,6 @@ module.exports.deleteClothingItem = (req, res) => {
       } if(err.name === 'CastError') {
         return res.status(INVALID_DATA).send({message: err.message});
       }
-
-      res.status(SERVER_ERROR).send({message: 'An error has occurred on the server'})
     });
 }
 
