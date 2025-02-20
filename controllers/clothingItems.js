@@ -23,16 +23,17 @@ module.exports.createClothingItem = (req, res) => {
 }
 
 module.exports.deleteClothingItem = (req, res) => {
-  const {itemId} =  req.params
-  const { currentUser } = req.user;
-  ClothingItems.findByIdAndDelete(itemId)
+  const {itemId} =  req.params;
+  ClothingItems.findById(itemId)
     .orFail()
     .then((item) => {
-      if(item.owner !== currentUser) {
+      if(String(item.owner) !== req.user._id) {
       res.status(FORBIDDEN_ERROR).send({ message: "Not Authorized"});
-    } else {
-      res.status(200).send(item)
-    }
+      }
+      return item.deleteOne(itemId)
+        .then(()  => {
+          res.send({message: "Successfully deleted", itemId});
+        })
   })
     .catch((err) => {
       console.error(err);
@@ -41,6 +42,7 @@ module.exports.deleteClothingItem = (req, res) => {
       } if(err.name === 'CastError') {
         return res.status(INVALID_DATA).send({message: err.message});
       }
+       return res.status(SERVER_ERROR).send({ message: "An error occurred on the server"});
     });
 }
 

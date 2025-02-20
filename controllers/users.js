@@ -2,14 +2,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const User = require('../models/user');
 const {JWT_SECRET} = require("../utils/config");
-const {NOT_FOUND_ERROR, SERVER_ERROR, INVALID_DATA, AUTHORIZATION_ERROR} = require('../utils/errors')
-
-module.exports.getUsers = (req, res) => {
-  console.log('IN CONTROLLER');
-  User.find({})
-    .then((users) => res.status(200).send(users))
-    .catch(() => res.status(SERVER_ERROR).send({ message: 'An error has occurred on the server.' }));
-}
+const {NOT_FOUND_ERROR, SERVER_ERROR, INVALID_DATA, AUTHORIZATION_ERROR, CONFLICT_ERROR} = require('../utils/errors')
 
 module.exports.createUser = (req, res) => {
   const { name, avatar, email, password } = req.body;
@@ -37,7 +30,7 @@ module.exports.createUser = (req, res) => {
         return res.status(INVALID_DATA).send({message: err.message});
       }
       if(err.code === 11000) {
-        return res.status(409).send({ message: err.message });
+        return res.status(CONFLICT_ERROR).send({ message: err.message });
       }
 
       return res.status(SERVER_ERROR).send({message: err.message});
@@ -48,7 +41,7 @@ module.exports.getCurrentUser = (req, res) => {
   console.log("User ID");
   User.findById(req.user._id)
     .orFail()
-    .then((user) => res.status(200).send(user))
+    .then((user) => res.send(user))
     .catch((err) => {
       console.error(err);
       console.log(err.name);
@@ -78,8 +71,9 @@ module.exports.loginUser = (req,res) => {
     }).catch((err) => {
       console.error(err);
       if(err.message === "Incorrect email or password") {
-        res.status(AUTHORIZATION_ERROR).send({message: "Incorrect email or password!"});
+        return res.status(AUTHORIZATION_ERROR).send({message: "Incorrect email or password!"});
       }
+      return res.status(SERVER_ERROR).send({ message: "An error occurred on the server"});
     })
 }
 
@@ -94,6 +88,9 @@ module.exports.updateUser = (req, res) => {
     }
 
     if(err.name === "CastError") {
+      return res.status(INVALID_DATA).send({ message: err.message });
+    }
+    if(err.name === "ValidationError") {
       return res.status(INVALID_DATA).send({ message: err.message });
     }
 
