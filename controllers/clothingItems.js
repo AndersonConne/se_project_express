@@ -28,9 +28,9 @@ module.exports.deleteClothingItem = (req, res) => {
     .orFail()
     .then((item) => {
       if(String(item.owner) !== req.user._id) {
-      res.status(FORBIDDEN_ERROR).send({ message: "Not Authorized"});
+      return res.status(FORBIDDEN_ERROR).send({ message: "Not Authorized"});
       }
-      return item.deleteOne(itemId)
+      return item.deleteOne()
         .then(()  => {
           res.send({message: "Successfully deleted", itemId});
         })
