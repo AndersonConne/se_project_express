@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require("cors");
 const mainRouter = require('./routes/index');
 const { createUser, loginUser } = require("./controllers/users");
+const errorHandler = require("./middleware/centralizedError");
 
 const { PORT = 3001 } = process.env;
 const app = express();
@@ -13,6 +14,7 @@ app.use(cors());
 app.post('/signin', loginUser);
 app.post('/signup', createUser);
 app.use(mainRouter);
+app.use(errorHandler);
 
 
 
