@@ -19,8 +19,10 @@ module.exports = {
     ecmaVersion: "latest",
     sourceType: "module",
   },
-  rules: {"no-console": ['off'],
-   "no-underscore-dangle": ["error", { "allow": ["_id"]}],
-   'consistent-return': 'off',
- },
+  rules: {
+    "no-console": ["off"],
+    "no-underscore-dangle": ["error", { allow: ["_id"] }],
+    "consistent-return": "off",
+    "no-unused-vars": ["error", { argsIgnorePattern: "next" }],
+  },
 };

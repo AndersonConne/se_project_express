@@ -1,87 +1,89 @@
-const ClothingItems = require('../models/clothingItem');
-const {NOT_FOUND_ERROR, INVALID_DATA, SERVER_ERROR, FORBIDDEN_ERROR} = require('../utils/errors')
+const ClothingItems = require("../models/clothingItem");
+const BadRequestError = require("../utils/errors/BadRequestError");
+const ForbiddenError = require("../utils/errors/ForbiddenError");
+const NotFoundError = require("../utils/errors/NotFoundError");
 
-module.exports.getClothingItems = (req, res) => {
+module.exports.getClothingItems = (req, res, next) => {
   ClothingItems.find({})
-    .then((clothingItems) => res.status(200).send({data: clothingItems}))
-    .catch(()  => res.status(SERVER_ERROR).send({ message: 'An error has occurred on the server' }));
+    .then((clothingItems) => res.send({ data: clothingItems }))
+    .catch((err) => {
+      next(err);
+    });
 };
 
 module.exports.createClothingItem = (req, res) => {
-  const { name, weather, imageUrl} = req.body;
+  const { name, weather, imageUrl } = req.body;
 
-  ClothingItems.create({ name, weather, imageUrl, owner: req.user._id})
+  ClothingItems.create({ name, weather, imageUrl, owner: req.user._id })
     .then((clothingItems) => res.status(201).send(clothingItems))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-         return res.status(INVALID_DATA).send({ message: err.message });
+      if (err.name === "ValidationError") {
+        next(new BadRequestError("Invalid Data"));
+      } else {
+        next(err);
       }
-
-      res.status(SERVER_ERROR).send({ message: err.message })
-
     });
-}
+};
 
-module.exports.deleteClothingItem = (req, res) => {
-  const {itemId} =  req.params;
+module.exports.deleteClothingItem = (req, res, next) => {
+  const { itemId } = req.params;
   ClothingItems.findById(itemId)
     .orFail()
     .then((item) => {
-      if(String(item.owner) !== req.user._id) {
-      return res.status(FORBIDDEN_ERROR).send({ message: "Not Authorized"});
+      if (String(item.owner) !== req.user._id) {
+        return next(new ForbiddenError("You are not Authorized"));
       }
-      return item.deleteOne()
-        .then(()  => {
-          res.send({message: "Successfully deleted", itemId});
-        })
-  })
+      return item.deleteOne().then(() => {
+        res.send({ message: "Successfully deleted", itemId });
+      });
+    })
     .catch((err) => {
       console.error(err);
-      if(err.name === "DocumentNotFoundError") {
-         return res.status(NOT_FOUND_ERROR).send({message: err.message});
-      } if(err.name === 'CastError') {
-        return res.status(INVALID_DATA).send({message: err.message});
+      if (err.name === "DocumentNotFoundError") {
+        next(new NotFoundError("Request was not found"));
+      } else if (err.name === "CastError") {
+        next(new BadRequestError("Format is invalid"));
+      } else {
+        next(err);
       }
-       return res.status(SERVER_ERROR).send({ message: "An error occurred on the server"});
     });
-}
+};
 
-module.exports.likeClothingItem = (req, res) => {
+module.exports.likeClothingItem = (req, res, next) => {
   ClothingItems.findByIdAndUpdate(
-  req.params.itemId,
-  { $addToSet: { likes: req.user._id } },
-  { new: true },
-)
-  .orFail()
-  .then((item) => res.status(200).send(item))
-  .catch((err) => {
-    if(err.name === "DocumentNotFoundError") {
-      return res.status(NOT_FOUND_ERROR).send({ message: err.message})
-    } if(err.name === 'CastError') {
-       return res.status(INVALID_DATA).send({ message: err.message});
-    }
+    req.params.itemId,
+    { $addToSet: { likes: req.user._id } },
+    { new: true }
+  )
+    .orFail()
+    .then((item) => res.status(200).send(item))
+    .catch((err) => {
+      if (err.name === "DocumentNotFoundError") {
+        next(new NotFoundError("Request was not found"));
+      } else if (err.name === "CastError") {
+        next(new BadRequestError("Format is invalid"));
+      } else {
+        next(err);
+      }
+    });
+};
 
-    res.status(SERVER_ERROR).send({ message: 'An error has occurred on the server.'});
-  });
-}
-
-module.exports.unlikeClothingItem = (req, res) => {
+module.exports.unlikeClothingItem = (req, res, next) => {
   ClothingItems.findByIdAndUpdate(
     req.params.itemId,
     { $pull: { likes: req.user._id } },
-    { new: true },
+    { new: true }
   )
-  .orFail()
-  .then((item) => res.status(200).send(item))
-  .catch((err) => {
-    console.error(err);
-    if (err.name === "DocumentNotFoundError") {
-      return res.status(NOT_FOUND_ERROR).send({ message: err.message });
-    } if (err.name === 'CastError') {
-     return res.status(INVALID_DATA).send({message: err.message})
-    }
-
-    res.status(SERVER_ERROR).send({ message: 'An error has occurred on the server.'});
-  });
-}
-
+    .orFail()
+    .then((item) => res.status(200).send(item))
+    .catch((err) => {
+      console.error(err);
+      if (err.name === "DocumentNotFoundError") {
+        next(new NotFoundError("Request was not found"));
+      } else if (err.name === "CastError") {
+        next(new BadRequestError("Format is invalid"));
+      } else {
+        next(err);
+      }
+    });
+};

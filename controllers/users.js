@@ -2,20 +2,15 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const User = require("../models/user");
 const { JWT_SECRET } = require("../utils/config");
-const {
-  NOT_FOUND_ERROR,
-  SERVER_ERROR,
-  INVALID_DATA,
-  AUTHORIZATION_ERROR,
-  CONFLICT_ERROR,
-} = require("../utils/errors");
+const BadRequestError = require("../utils/errors/BadRequestError");
+const ConflictError = require("../utils/errors/ConflictError");
+const NotFoundError = require("../utils/errors/NotFoundError");
+const UnauthorizedError = require("../utils/errors/UnauthorizedError");
 
-module.exports.createUser = (req, res) => {
+module.exports.createUser = (req, res, next) => {
   const { name, avatar, email, password } = req.body;
   if (!email) {
-    return res
-      .status(INVALID_DATA)
-      .send({ message: "Email or Password required!" });
+    return next(new BadRequestError("Invalid data Format"));
   }
 
   return User.findOne({ email })
@@ -36,43 +31,37 @@ module.exports.createUser = (req, res) => {
     .catch((err) => {
       console.error(err.message);
       if (err.name === "ValidationError") {
-        return res.status(INVALID_DATA).send({ message: err.message });
+        next(new BadRequestError("Invalid data Format"));
+      } else if (err.code === 11000) {
+        next(new ConflictError("An error occured on the server"));
+      } else {
+        next(err);
       }
-      if (err.code === 11000) {
-        return res.status(CONFLICT_ERROR).send({ message: err.message });
-      }
-
-      return res.status(SERVER_ERROR).send({ message: err.message });
     });
 };
 
-module.exports.getCurrentUser = (req, res) => {
+module.exports.getCurrentUser = (req, res, next) => {
   console.log("User ID");
   User.findById(req.user._id)
     .orFail()
     .then((user) => res.send(user))
     .catch((err) => {
       console.error(err);
-      console.log(err.name);
       if (err.name === "DocumentNotFoundError") {
-        return res.status(NOT_FOUND_ERROR).send({ message: err.message });
+        next(new NotFoundError("User not found"));
+      } else if (err.name === "CastError") {
+        next(new BadRequestError("Format is invalid"));
+      } else {
+        next(err);
       }
-      if (err.name === "CastError") {
-        return res.status(INVALID_DATA).send({ message: err.message });
-      }
-      res
-        .status(SERVER_ERROR)
-        .send({ message: "An error has occured on the server." });
     });
 };
 
-module.exports.loginUser = (req, res) => {
+module.exports.loginUser = (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res
-      .status(INVALID_DATA)
-      .send({ message: "Email and password are required" });
+    return next(new BadRequestError("Incorrect email or password"));
   }
 
   return User.findUserByCredentials(email, password)
@@ -85,14 +74,11 @@ module.exports.loginUser = (req, res) => {
     })
     .catch((err) => {
       console.error(err);
-      if (err.message === "Incorrect email or password") {
-        return res
-          .status(AUTHORIZATION_ERROR)
-          .send({ message: "Incorrect email or password!" });
+      if (err.name === "InvalidData") {
+        next(new UnauthorizedError("Incorrect email or password"));
+      } else {
+        next(err);
       }
-      return res
-        .status(SERVER_ERROR)
-        .send({ message: "An error occurred on the server" });
     });
 };
 
@@ -109,18 +95,13 @@ module.exports.updateUser = (req, res) => {
     })
     .catch((err) => {
       if (err.name === "DocumentNotFoundError") {
-        return res.status(NOT_FOUND_ERROR).send({ message: err.message });
+        next(new NotFoundError("User not found"));
+      } else if (err.name === "CastError") {
+        next(new BadRequestError("Invalid data"));
+      } else if (err.name === "ValidationError") {
+        next(new BadRequestError(err.message));
+      } else {
+        next(err);
       }
-
-      if (err.name === "CastError") {
-        return res.status(INVALID_DATA).send({ message: err.message });
-      }
-      if (err.name === "ValidationError") {
-        return res.status(INVALID_DATA).send({ message: err.message });
-      }
-
-      return res
-        .status(SERVER_ERROR)
-        .send({ message: "An error has occured on the server" });
     });
 };
