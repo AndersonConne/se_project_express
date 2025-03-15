@@ -11,7 +11,7 @@ module.exports.getClothingItems = (req, res, next) => {
     });
 };
 
-module.exports.createClothingItem = (req, res) => {
+module.exports.createClothingItem = (req, res, next) => {
   const { name, weather, imageUrl } = req.body;
 
   ClothingItems.create({ name, weather, imageUrl, owner: req.user._id })
