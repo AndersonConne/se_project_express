@@ -70,11 +70,11 @@ module.exports.loginUser = (req, res, next) => {
         expiresIn: "7d",
       });
 
-      res.send({ email, password, token });
+      res.send({ token });
     })
     .catch((err) => {
       console.error(err);
-      if (err.name === "InvalidData") {
+      if (err.message === "Incorrect email or password") {
         next(new UnauthorizedError("Incorrect email or password"));
       } else {
         next(err);
@@ -88,7 +88,7 @@ module.exports.updateUser = (req, res) => {
   User.findByIdAndUpdate(
     req.user._id,
     { name, avatar },
-    { new: true, runValidators: true, upsert: true }
+    { new: true, runValidators: true }
   )
     .then((user) => {
       res.send(user);

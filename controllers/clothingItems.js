@@ -14,6 +14,8 @@ module.exports.getClothingItems = (req, res, next) => {
 module.exports.createClothingItem = (req, res, next) => {
   const { name, weather, imageUrl } = req.body;
 
+  console.log(req.user._id);
+
   ClothingItems.create({ name, weather, imageUrl, owner: req.user._id })
     .then((clothingItems) => res.status(201).send(clothingItems))
     .catch((err) => {
@@ -50,6 +52,7 @@ module.exports.deleteClothingItem = (req, res, next) => {
 };
 
 module.exports.likeClothingItem = (req, res, next) => {
+  console.log(typeof req.user._id);
   ClothingItems.findByIdAndUpdate(
     req.params.itemId,
     { $addToSet: { likes: req.user._id } },

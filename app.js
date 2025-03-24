@@ -5,6 +5,7 @@ const cors = require("cors");
 const mainRouter = require("./routes/index");
 const { createUser, loginUser } = require("./controllers/users");
 const errorHandler = require("./middleware/centralizedError");
+const { validateLogin, validateUserInfo } = require("./middleware/validation");
 const { requestLogger, errorLogger } = require("./middleware/logger");
 const { errors } = require("celebrate");
 
@@ -14,13 +15,13 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(requestLogger);
-app.get("/crash-test", () => {
-  setTimeout(() => {
-    throw new Error("Server will crash now");
-  }, 0);
-});
-app.post("/signin", loginUser);
-app.post("/signup", createUser);
+// app.get("/crash-test", () => {
+//   setTimeout(() => {
+//     throw new Error("Server will crash now");
+//   }, 0);
+// });
+app.post("/signin", validateLogin, loginUser);
+app.post("/signup", validateUserInfo, createUser);
 app.use(mainRouter);
 app.use(errorLogger);
 app.use(errors());
